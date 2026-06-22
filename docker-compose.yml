@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: voice_intel_db
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+      POSTGRES_DB: voice_intel
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d voice_intel"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v2.8.0
+    container_name: voice_intel_mlflow
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./data/mlflow:/mlflow
+    command: mlflow server --host 0.0.0.0 --port 5000 --backend-store-uri sqlite:///mlflow.db --default-artifact-root /mlflow
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: voice_intel_api
+    environment:
+      - POSTGRES_URL=postgresql://admin:admin123@postgres:5432/voice_intel
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mlflow:
+        condition: service_started
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile.dashboard
+    container_name: voice_intel_dashboard
+    environment:
+      - POSTGRES_URL=postgresql://admin:admin123@postgres:5432/voice_intel
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./data:/app/data
+    depends_on:
+      - api
+
+volumes:
+  postgres_data:

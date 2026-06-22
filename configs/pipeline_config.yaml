@@ -1,0 +1,57 @@
+# Pipeline Configuration
+
+database:
+  db_type: "sqlite"  # Can be "postgresql" or "sqlite"
+  sqlite_path: "data/voice_intelligence.db"
+  postgres_url: "postgresql://admin:admin123@localhost:5432/voice_intel"
+
+vectorstore:
+  chroma_path: "data/chroma_db"
+  collection_name: "customer_voice"
+  embedding_model: "all-MiniLM-L6-v2"
+  distance_metric: "cosine"
+
+preprocessing:
+  language: "en"
+  lowercase: true
+  remove_stopwords: true
+  lemmatize: true
+  stem: false
+  handle_emojis: true
+  remove_urls: true
+  remove_html: true
+  remove_punctuation: true
+  normalize_chars: true
+  segment_sentences: true
+
+models:
+  sentiment:
+    model_name: "distilbert-base-uncased-finetuned-sst-2-english"
+    device: -1  # CPU
+  emotion:
+    model_name: "j-hartmann/emotion-english-distilroberta-base"
+  toxicity:
+    model_name: "unitary/toxic-bert"
+  classification:
+    model_name: "typeform/distilbert-base-uncased-mnli"
+    labels:
+      - "Billing Issue"
+      - "Feature Request"
+      - "Bug Report"
+      - "Complaint"
+      - "Appreciation"
+      - "Technical Support"
+      - "Account Issue"
+  aspects:
+    - "UI"
+    - "Battery"
+    - "Performance"
+    - "Pricing"
+    - "Support"
+    - "Security"
+    - "Features"
+  keywords:
+    top_n: 10
+  mlflow:
+    tracking_uri: "http://localhost:5000"
+    experiment_name: "customer_voice_intelligence"
